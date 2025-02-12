@@ -25,16 +25,17 @@ void* nc_malloc(size_t size){
 typedef struct long_value long_value;
  
 long_value sum(long_value a, long_value b) { //summarizing two long figures. Longest figure is taken as the first argument.
-  long_value s;
 
-  s.length = a.length + 1;
-  s.values = (int*)nc_malloc(s.length*sizeof(int));
-  s.values[a.length - 1] = a.values[a.length - 1];
-  s.values[a.length] = 0;
+    long_value s;
 
-  for (size_length i = 0; i < b.length; ++i)
+    s.length = a.length + 1;
+    s.values = (int*)nc_malloc(s.length*sizeof(int));
+    s.values[a.length - 1] = a.values[a.length - 1];
+    s.values[a.length] = 0;
+
+    for (size_length i = 0; i < b.length; ++i)
     s.values[i] = a.values[i] + b.values[i];
-  return s;
+    return s;
 
 }
 
@@ -51,7 +52,6 @@ long_value* sub(long_value* a, long_value b) { //substracting one long figure fr
 void normalize(long_value l) { // normalizing the figure according to it's base
 
   for (size_length i = 0; i < l.length - 1; ++i) {
-
     if (l.values[i] >= BASE) { //if the figure is larger than the max, то организовавается перенос
       int carryover = l.values[i] / BASE;
       l.values[i + 1] += carryover;
@@ -131,6 +131,7 @@ long_value karatsuba(long_value a, long_value b) {
   return product;
 }
 
+
 void reverse_array(char* array_symb){ 
     size_t left = 0;
     size_t right = strlen(array_symb) - 1;
@@ -144,20 +145,12 @@ void reverse_array(char* array_symb){
     }
 }
 
-long_value to_struct(char* word){
-    long_value result;
-    result.values = (int*)nc_malloc(strlen(word)*sizeof(int));
-    reverse_array(word);
-    for(size_t i = 0; i < strlen(word); i++){
-        result.values[i] = word[i] - '0';
-    }
-    result.length = (size_length)strlen(word);
-    return result;
-}
-
-
 void printing(long_value result){
-    for(size_t i = 0; i < result.length; i++){
+    size_t started = 0;
+    for(int i = result.length - 1; i >= 0; i--){
+        if(result.values[i] == 0 && started == 0)
+            continue;
+        started = 1;
         printf("%d",result.values[i]);
     }
     printf("\n");
@@ -175,16 +168,69 @@ void scanning_number(char array[]){
     array[i] = '\0';
 }
 
+long_value to_struct(char* word){
+    long_value result;
+    result.values = (int*)nc_malloc(strlen(word)*sizeof(int));
+    reverse_array(word);
+    for(size_t i = 0; i < strlen(word); i++){
+        result.values[i] = word[i] - '0';
+    }
+    result.length = (size_length)strlen(word);
+    return result;
+}
+
+int compare_arrays(int* arr1, int* arr2, int size1, int size2) {
+    for (int i = 0; i < size1; i++) {
+        if (arr1[(size1-1)-i] != arr2[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 int main(){
-    char frst_num[MAX_LEN];
-    scanning_number(frst_num);
-    char scnd_num[MAX_LEN];
-    scanning_number(scnd_num);
-
+    // char frst_num[MAX_LEN];
+    // scanning_number(frst_num);
+    // char scnd_num[MAX_LEN];
+    // scanning_number(scnd_num);
+    
+///CHECK_1
+    // char frst_num[] = {'9', '9', '9', '9', '9', '9', '9', '9', '9', '9', '\0'};
+    // char scnd_num[] = {'8', '8', '8', '8', '8', '8', '8', '8', '8', '8', '\0'};
+    // long_value frst = to_struct(&frst_num);
+    // long_value scnd = to_struct(&scnd_num);
+    // int exp_result[] = {8,8,8,8,8,8,8,8,8,7,1,1,1,1,1,1,1,1,1,2};
+    // int len_exp_res = sizeof(exp_result)/sizeof(exp_result[0]);
+    // long_value real_res = karatsuba(frst, scnd);
+    // int* real_result = real_res.values;
+    // int len_real_res = real_res.length;
+///CHECK_2
+    // char frst_num[] = {'9', '9', '9', '9', '9', '9', '9', '9', '9', '9', '8', '6', '4', '3', '\0'};
+    // char scnd_num[] = {'8', '8', '8', '8', '8', '1', '1', '1', '8', '8', '1', '1', '1', '1', '\0'};
+    // long_value frst = to_struct(&frst_num);
+    // long_value scnd = to_struct(&scnd_num);
+    // int exp_result[] = {8,8,8,8,8,1,1,1,8,7,9,9,0,4,7,8,8,3,2,1,7,7,3,3,2,3,7,3};
+    // int len_exp_res = sizeof(exp_result)/sizeof(exp_result[0]);
+    // long_value real_res = karatsuba(frst, scnd);
+    // int* real_result = real_res.values;
+    // int len_real_res = real_res.length;
+///CHECK_3
+    char frst_num[] = {'6', '4', '3', '\0'};
+    char scnd_num[] = {'8', '1', '1', '\0'};
     long_value frst = to_struct(&frst_num);
     long_value scnd = to_struct(&scnd_num);
-    printing(karatsuba(frst, scnd));
+    int exp_result[] = {5,2,1,4,7,3};
+    int len_exp_res = sizeof(exp_result)/sizeof(exp_result[0]);
+    long_value real_res = karatsuba(frst, scnd);
+    int* real_result = real_res.values;
+    int len_real_res = real_res.length;
 
+    if(compare_arrays(exp_result, real_result, len_exp_res, len_real_res)){
+        printf("Succesful result!\n");
+    }
+    // printing(real_res);
+    free(frst.values);
+    free(scnd.values);
+    free(real_res.values);
     return 0;
 }
