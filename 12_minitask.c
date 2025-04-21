@@ -1,115 +1,153 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <assert.h>
+#include <string.h>
 
-#define SIZE 2000000 // Размер массива
+#define SIZE 4000000 // Размер массива
 
-int lomuto_partition(int arr[], int low, int high) {
-    int pivot = arr[high];  // Опорный элемент (последний в массиве)
-    int i = low - 1;  // Индекс меньших элементов
+static inline void swap(long* a, long* b) {
+    long temp = *a;
+    *a = *b;
+    *b = temp;
+}
 
-    for (int j = low; j < high; j++) {
-        if (arr[j] <= pivot) {
-            i++;
-            // Обмен элементов arr[i] и arr[j]
-            int temp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = temp;
+long* lomuto_partition(long* first, long* last) {
+    assert(first <= last);
+    if (last - first < 2)
+        return first;
+
+    --last;
+
+    if (*first > *last)
+        swap(first, last);
+
+    long* pivot_pos = first;
+    long pivot = *first;
+
+    do {
+        ++first;
+    } while (*first < pivot);
+
+    assert(first <= last);
+
+    // Main course.
+    for (long* read = first + 1; read < last; ++read) {
+        long x = *read;
+        if (x < pivot) {
+            *read = *first;
+            *first = x;
+            ++first;
         }
     }
-    // Ставим pivot на своё место
-    int temp = arr[i + 1];
-    arr[i + 1] = arr[high];
-    arr[high] = temp;
 
-    return i + 1;  // Возвращаем индекс pivot
+    // Put the pivot where it belongs.
+    assert(*first >= pivot);
+    --first;
+    *pivot_pos = *first;
+    *first = pivot;
+    return first;
 }
 
-void lomuto_sort(int arr[], int low, int high) {
-    if (low < high) {
-        int p = lomuto_partition(arr, low, high);
-        lomuto_sort(arr, low, p - 1);
-        lomuto_sort(arr, p + 1, high);
+void lomuto_sort(long* arr, long* arr_last) {
+    if (arr >= arr_last - 1) return;
+    long* p = lomuto_partition(arr, arr_last);
+    lomuto_sort(arr, p);
+    lomuto_sort(p+1, arr_last);
+}
+
+long* lomuto_partition_branchfree(long* first, long* last) {
+    assert(first <= last);
+    if (last - first < 2)
+        return first;
+
+    --last;
+    if (*first > *last)
+        swap(first, last);
+
+    long* pivot_pos = first;
+    long pivot = *first;
+
+    do {
+        ++first;
+        assert(first <= last);
+    } while (*first < pivot);
+
+    for (long* read = first + 1; read < last; ++read) {
+        long x = *read;
+        int smaller = -(x < pivot);
+        long delta = smaller & (read - first);
+
+        first[delta] = *first;
+        read[-delta] = x;
+        first -= smaller;
     }
+
+    assert(*first >= pivot);
+    --first;
+    *pivot_pos = *first;
+    *first = pivot;
+    return first;
 }
 
-int lomuto_branchless_partition(int arr[], int low, int high) {
-    int pivot = arr[high];
-    int i = low - 1;
+void lomuto_branchfree_sort(long* arr, long* arr_last) {
+    if (arr >= arr_last - 1) return;
+    long* p = lomuto_partition_branchfree(arr, arr_last);
+    lomuto_branchfree_sort(arr, p);
+    lomuto_branchfree_sort(p+1, arr_last);
+}
 
-    for (int j = low; j < high; j++) {
-        int smaller = -(arr[j] <= pivot);  // Если arr[j] <= pivot → smaller = -1, иначе 0
-        i += smaller & 1;  // Увеличиваем i, если arr[j] <= pivot
+long* hoare_partition(long* first, long* last) {
+    assert(first <= last);
+    if (last - first < 2)
+        return first;
 
-        // Обмен arr[i] и arr[j] без условия
-        int temp1 = arr[i];
-        int temp2 = arr[j];
-        arr[i] = temp2 ^ ((temp1 ^ temp2) & smaller);
-        arr[j] = temp1 ^ ((temp1 ^ temp2) & smaller);
+    --last;
+    if (*first > *last)
+        swap(first, last);
+
+    long* pivot_pos = first;
+    long pivot = *pivot_pos;
+
+    for (;;) {
+        ++first;
+        long f = *first;
+        while (f < pivot)
+            f = *++first;
+
+        long l = *last;
+        while (pivot < l)
+            l = *--last;
+
+        if (first >= last)
+            break;
+
+        *first = l;
+        *last = f;
+        --last;
     }
 
-    // Ставим pivot на своё место
-    int temp1 = arr[i + 1];
-    int temp2 = arr[high];
-    arr[i + 1] = temp2 ^ ((temp1 ^ temp2) & -1);
-    arr[high] = temp1 ^ ((temp1 ^ temp2) & -1);
-
-    return i + 1;
+    --first;
+    swap(first, pivot_pos);
+    return first;
 }
 
-void lomuto_branchless_sort(int arr[], int low, int high) {
-    if (low < high) {
-        int p = lomuto_branchless_partition(arr, low, high);
-        lomuto_branchless_sort(arr, low, p - 1);
-        lomuto_branchless_sort(arr, p + 1, high);
-    }
+void hoare_sort(long* arr, long* arr_last) {
+    if (arr >= arr_last - 1) return;
+    long* p = hoare_partition(arr, arr_last);
+    hoare_sort(arr, p);
+    hoare_sort(p+1, arr_last);
 }
 
-int hoare_partition(int *arr, int low, int high) {
-    int pivot = arr[low];
-    int i = low - 1;
-    int j = high + 1;
-
-    while (1) {
-        int ai;
-        do {
-            i++;
-            ai = arr[i];
-        } while (ai < pivot);
-
-        int aj;
-        do {
-            j--;
-            aj = arr[j];
-        } while (aj > pivot);
-
-        if (i >= j)
-            return j;
-
-        // Обмен без временной переменной (опционально)
-        int temp = arr[i];
-        arr[i] = arr[j];
-        arr[j] = temp;
-    }
-}
-
-void hoare_sort(int arr[], int low, int high) {
-    if (low < high) {
-        int p = hoare_partition(arr, low, high);
-        hoare_sort(arr, low, p - 1);
-        hoare_sort(arr, p + 1, high);
-    }
-}
-
-void fill_array(int arr[], int size) {
-    for (int i = 0; i < size; i++) {
+void fill_array(long* arr, size_t size) {
+    for (size_t i = 0; i < size; i++) {
         arr[i] = rand();
-    } // Заполняем случайными числами
+    }
 }
 
-void benchmark(void (*sort)(int[], int, int), int arr[], int size, const char *name) {
+void benchmark(void (*sort)(long*,long*), long* first ,long* last, const char *name) {
     clock_t start = clock();
-    sort(arr, 0, size - 1);  // Запускаем разбиение
+    sort(first, last);
     clock_t end = clock();
     printf("%s: %f секунд\n", name, (double)(end - start) / CLOCKS_PER_SEC);
 }
@@ -117,10 +155,9 @@ void benchmark(void (*sort)(int[], int, int), int arr[], int size, const char *n
 int main() {
     srand((unsigned)time(NULL));
 
-    // Выделение больших массивов в куче
-    int *arr1 = malloc(SIZE * sizeof(int));
-    int *arr2 = malloc(SIZE * sizeof(int));
-    int *arr3 = malloc(SIZE * sizeof(int));
+    long* arr1 = malloc(SIZE * sizeof(long));
+    long* arr2 = malloc(SIZE * sizeof(long));
+    long* arr3 = malloc(SIZE * sizeof(long));
 
     if (!arr1 || !arr2 || !arr3) {
         fprintf(stderr, "Ошибка: не удалось выделить память.\n");
@@ -128,12 +165,12 @@ int main() {
     }
 
     fill_array(arr1, SIZE);
-    fill_array(arr2, SIZE);
-    fill_array(arr3, SIZE);
+    memcpy(arr2, arr1, SIZE*sizeof(long));
+    memcpy(arr3, arr1, SIZE*sizeof(long));
 
-    benchmark(lomuto_sort, arr1, SIZE, "Lomuto");
-    benchmark(lomuto_branchless_sort, arr2, SIZE, "Lomuto(branch free)");
-    benchmark(hoare_sort, arr3, SIZE, "Hoare");
+    benchmark(lomuto_sort, arr1, arr1 + SIZE, "Lomuto");
+    benchmark(lomuto_branchfree_sort, arr2, arr2 + SIZE, "Lomuto(branch free)");
+    benchmark(hoare_sort, arr3, arr3 + SIZE, "Hoare");
 
     free(arr1);
     free(arr2);
