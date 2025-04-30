@@ -13,6 +13,8 @@ struct long_value { //type for large figures
 
 };
 
+typedef struct long_value long_value;
+
 void* nc_malloc(size_t size){
     void* result = malloc(size);
     if (result == NULL){
@@ -21,27 +23,22 @@ void* nc_malloc(size_t size){
     }
     return result;
 }
-
-typedef struct long_value long_value;
  
 long_value sum(long_value a, long_value b) { //summarizing two long figures. Longest figure is taken as the first argument.
-
-    long_value s;
-
-    s.length = a.length + 1;
-    s.values = (int*)nc_malloc(s.length*sizeof(int));
-    s.values[a.length - 1] = a.values[a.length - 1];
-    s.values[a.length] = 0;
-
-    for (size_length i = 0; i < b.length; ++i)
-    s.values[i] = a.values[i] + b.values[i];
-    return s;
+  
+  long_value s;
+  s.length = a.length;
+  s.values = (int*)nc_malloc(s.length*sizeof(int));
+  memcpy(s.values, a.values, a.length* sizeof(int));
+  for(size_length i = 0; i < b.length; i++)
+    s.values[i] += b.values[i];
+  return s;
 
 }
 
 
 long_value* sub(long_value* a, long_value b) { //substracting one long figure from another.
-  for (size_length i = 0; i < b.length; ++i)
+  for (size_length i = 0; i < b.length; i++)
     a->values[i] -= b.values[i];
 
   return a;
@@ -51,11 +48,12 @@ long_value* sub(long_value* a, long_value b) { //substracting one long figure fr
 
 void normalize(long_value l) { // normalizing the figure according to it's base
 
-  for (size_length i = 0; i < l.length - 1; ++i) {
+  for (size_length i = 0; i < l.length - 1; i++) {
     if (l.values[i] >= BASE) { //if the figure is larger than the max, то организовавается перенос
       int carryover = l.values[i] / BASE;
-      l.values[i + 1] += carryover;
       l.values[i] -= carryover * BASE;
+      l.values[i + 1] += carryover;
+      
 
     } else if (l.values[i] < 0) { //если меньше - borrow
       int carryover = (l.values[i] + 1) / BASE - 1;
@@ -71,7 +69,7 @@ long_value karatsuba(long_value a, long_value b) {
   product.length = a.length + b.length;
   product.values = (int*)nc_malloc(product.length*sizeof(int));
 
-  if (a.length < MIN_LENGTH_FOR_KARATSUBA) { //если число короче то apply native умножение
+  if (a.length < MIN_LENGTH_FOR_KARATSUBA || b.length < MIN_LENGTH_FOR_KARATSUBA) { //если число короче то apply native умножение
     memset(product.values, 0, sizeof(int) * product.length);
     for (size_length i = 0; i < a.length; ++i){
       for (size_length j = 0; j < b.length; ++j){
@@ -215,22 +213,49 @@ int main(){
     // int* real_result = real_res.values;
     // int len_real_res = real_res.length;
 ///CHECK_3
-    char frst_num[] = {'6', '4', '3', '\0'};
-    char scnd_num[] = {'8', '1', '1', '\0'};
-    long_value frst = to_struct(&frst_num);
-    long_value scnd = to_struct(&scnd_num);
-    int exp_result[] = {5,2,1,4,7,3};
-    int len_exp_res = sizeof(exp_result)/sizeof(exp_result[0]);
+    // char frst_num[] = {'6', '4', '3', '\0'};
+    // char scnd_num[] = {'8', '1', '1', '\0'};
+    // long_value frst = to_struct(&frst_num);
+    // long_value scnd = to_struct(&scnd_num);
+    // int exp_result[] = {5,2,1,4,7,3};
+    // int len_exp_res = sizeof(exp_result)/sizeof(exp_result[0]);
+    // long_value real_res = karatsuba(frst, scnd);
+    // int* real_result = real_res.values;
+    // int len_real_res = real_res.length;
+///CHECK_4
+    char frst_num[] = {'8', '1', '1', '2', '4', '6', '\0'};
+    char scnd_num[] = {'6', '4', '\0'};
+    long_value frst = to_struct(frst_num);
+    long_value scnd = to_struct(scnd_num);
+
     long_value real_res = karatsuba(frst, scnd);
+
+    int exp_result[] = {5,1,9,1,9,7,4,4};
+    int len_exp_res = sizeof(exp_result)/sizeof(exp_result[0]);
     int* real_result = real_res.values;
     int len_real_res = real_res.length;
 
     if(compare_arrays(exp_result, real_result, len_exp_res, len_real_res)){
         printf("Succesful result!\n");
     }
-    // printing(real_res);
+    
+    printing(real_res);
     free(frst.values);
     free(scnd.values);
     free(real_res.values);
-    return 0;
+
+///CHECK
+  // char frst_num[] = {'\0'};
+  // char scnd_num[] = {'\0'};
+  // long_value frst = to_struct(frst_num);
+  // long_value scnd = to_struct(scnd_num);
+
+  // long_value summ;
+  // summ = sum(frst, scnd);
+  // normalize(summ);
+  // for(int i = summ.length -1 ; i >= 0; i--){
+  //   printf("%d", summ.values[i]);
+  // }
+  // printf("\n");
+  return 0;
 }
