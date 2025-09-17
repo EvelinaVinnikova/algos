@@ -2,6 +2,8 @@ import os
 import subprocess
 import sys
 
+SHORT_COMMIT_HASH_LENGTH = 7
+
 if len(sys.argv) != 5:
     print("Использование: python bisect.py <путь_к_репозиторию> <хороший_коммит> <плохой_коммит> <команда_теста>")
     sys.exit(1)
@@ -43,7 +45,7 @@ while low <= high:
     mid = (low + high) // 2
     current_commit = commits[mid]
 
-    print(f"Проверяем коммит: {current_commit[:7]}")
+    print(f"Проверяем коммит: {current_commit[:SHORT_COMMIT_HASH_LENGTH]}")
 
     subprocess.run(
         f"git checkout -q {current_commit}",
@@ -81,4 +83,5 @@ if first_bad_commit_index != -1:
     )
 else:
     print(f"Все промежуточные коммиты хорошие. Проблема, скорее всего, в коммите {bad_commit[:7]}")
+
 
