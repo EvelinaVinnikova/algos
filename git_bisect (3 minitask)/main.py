@@ -27,7 +27,7 @@ if result.returncode != 0:
     sys.exit(1)
 
 commits_text = result.stdout.strip()
-commits = commits_text.split('\n')
+commits = commits_text.splitlines()
 
 if not commits_text:
     print("Нет коммитов для проверки.")
@@ -81,3 +81,4 @@ if first_bad_commit_index != -1:
     )
 else:
     print(f"Все промежуточные коммиты хорошие. Проблема, скорее всего, в коммите {bad_commit[:7]}")
+
