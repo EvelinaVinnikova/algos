@@ -18,8 +18,3 @@ class FreqStack:
         if not self.group[self.maxfreq]:
             self.maxfreq -= 1
         return val
-        
-# Your FreqStack object will be instantiated and called as such:
-# obj = FreqStack()
-# obj.push(val)
-# param_2 = obj.pop()
