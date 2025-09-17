@@ -46,3 +46,34 @@ for i in range(100):
 
 for i in range(100):
     assert bf.contains(f"10.0.0.{i}")
+
+#-------------New Test---------------------------
+items_to_add_count = 10000
+items_to_check_count = 10000
+
+items_to_add = []
+items_to_check = []
+
+for i in range(items_to_add_count):
+    items_to_add.append("item_" + str(i))
+
+for i in range(items_to_check_count):
+    items_to_check.append("test_" + str(i))
+
+probs = [0.3, 0.07, 0.001]
+
+for p in probs:
+    bloom_filter = BloomFilter(expected_elements=items_to_add_count, false_positive_prob=p)
+
+    for item in items_to_add:
+        bloom_filter.add(item)
+
+    false_positives_counter = 0
+    for item in items_to_check:
+        if bloom_filter.contains(item):
+            false_positives_counter += 1
+
+    print("\nВероятность:", p)
+    print("Размер фильтра:", bloom_filter.m, "бит")
+    print("Количество хешей:", bloom_filter.k)
+    print("Ложных срабатываний:", false_positives_counter)
