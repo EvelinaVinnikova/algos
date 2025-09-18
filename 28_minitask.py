@@ -72,39 +72,39 @@ def analyze(data: str):
     all_nodes = find_all_functions(graph)
     output = []
 
-    recursive_components = []
+    scc_to_recursion_type = {}
     for component in sccs:
+        component_tuple = tuple(component)
+        rec_type = "no recursion"
         if len(component) > 1:
-            recursive_components.append(component)
+            rec_type = "indirect recursion"
         elif len(component) == 1:
             func = component[0]
             if func in graph.get(func, []):
-                recursive_components.append(component)
+                rec_type = "direct recursion"
+
+        scc_to_recursion_type[component_tuple] = rec_type
+
+    recursive_components = [
+        list(comp) for comp, rec_type in scc_to_recursion_type.items() if rec_type != "no recursion"
+    ]
 
     if recursive_components:
-        largest_scc = max(recursive_components, key=lambda comp: (len(comp), comp))
-        output.append(f"Largest recursive component ({len(largest_scc)} functions): {', '.join(largest_scc)}")
+        largest_scc = max(recursive_components, key=lambda comp: (len(comp), sorted(comp)))
+        output.append(
+            f"Largest recursive component ({len(largest_scc)} functions): {', '.join(sorted(largest_scc))}")
     else:
         output.append("No recursive components found")
 
-    func_to_scc = {func: comp for comp in sccs for func in comp}
+    func_to_scc_tuple = {func: tuple(comp) for comp in sccs for func in comp}
 
     for func in sorted(all_nodes):
-        component = func_to_scc.get(func, [func])
-
-      if len(component) > 1:
-            rec_type = "indirect recursion"
-        elif func in graph.get(func, []):
-            rec_type = "direct recursion"
-        else:
-            rec_type = "no recursion"
-
+        component_tuple = func_to_scc_tuple.get(func)
+        rec_type = scc_to_recursion_type.get(component_tuple, "no recursion")
         output.append(f"{func}: {rec_type}")
 
     return "\n".join(output)
 
-
-# Тесты остаются такими же
 result = analyze("""
 foo: bar, baz, qux
 bar: baz, foo, bar
