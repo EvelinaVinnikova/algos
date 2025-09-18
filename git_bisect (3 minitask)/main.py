@@ -82,6 +82,7 @@ if first_bad_commit_index != -1:
         text=True
     )
 else:
-    print(f"Все промежуточные коммиты хорошие. Проблема, скорее всего, в коммите {bad_commit[:7]}")
+    print(f"Все промежуточные коммиты хорошие. Проблема, скорее всего, в коммите {bad_commit[:SHORT_COMMIT_HASH_LENGTH]}")
+
 
 
