@@ -13,7 +13,7 @@ class BloomFilter:
         return int(-self.n * math.log(self.p) / (math.log(2) ** 2))
 
     def _get_hash_count(self):
-        return int((self.m / self.n) * math.log(2))
+        return max(1, int((self.m / self.n) * math.log(2)))
 
     def _hash(self, item, i):
         hash_value = int(hashlib.md5(f'{item}{i}'.encode()).hexdigest(), 16)
